@@ -146,7 +146,14 @@ def scale_screen_dimensions(width: int, height: int, max_dim_size: int):
     return safe_width, safe_height
 
 
-def run_agent(agent, instruction: str, scaled_width: int, scaled_height: int, max_turns: int = 30):
+def run_agent(
+    agent, 
+    instruction: str, 
+    scaled_width: int, 
+    scaled_height: int, 
+    max_turns: int = 30,
+    knowledge_base_updates: bool = True
+):
     global paused
     obs = {}
     traj = "Task:\n" + instruction
@@ -176,7 +183,11 @@ def run_agent(agent, instruction: str, scaled_width: int, scaled_height: int, ma
         print(f"\n🔄 Step {step + 1}/15: Getting next action from agent...")
         
         # Get next action code from the agent
-        info, code = agent.predict(instruction=instruction, observation=obs)
+        info, code = agent.predict(
+            instruction=instruction, 
+            observation=obs, 
+            knowledge_base_updates=knowledge_base_updates
+        )
 
         if "done" in code[0].lower() or "fail" in code[0].lower():
             if platform.system() == "Darwin":
@@ -187,8 +198,8 @@ def run_agent(agent, instruction: str, scaled_width: int, scaled_height: int, ma
                 os.system(
                     f'zenity --info --title="OpenACI Agent" --text="Task Completed" --width=200 --height=100'
                 )
-
-            agent.update_narrative_memory(traj)
+            if knowledge_base_updates:
+                agent.update_narrative_memory(traj)
             break
 
         if "next" in code[0].lower():
@@ -218,7 +229,8 @@ def run_agent(agent, instruction: str, scaled_width: int, scaled_height: int, ma
                 + "\n\n----------------------\n\nPlan:\n"
                 + info["executor_plan"]
             )
-            subtask_traj = agent.update_episodic_memory(info, subtask_traj)
+            if knowledge_base_updates:
+                subtask_traj = agent.update_episodic_memory(info, subtask_traj)
 
 
 def main():
@@ -307,9 +319,21 @@ def main():
         default=30,
         help="Maximum number of turns to run the agent for",
     )
-    
+
+    parser.add_argument(
+        "--empty_knowledge_base",
+        action="store_true",
+        help="Whether to use the empty knowledge base", 
+    )
+
+    parser.add_argument(
+        "--no_knowledge_base_updates",
+        action="store_true",
+        help="Whether to update the knowledge base",
+    )
 
     args = parser.parse_args()
+
     assert (
         args.grounding_model_provider and args.grounding_model
     ) or args.endpoint_url, "Error: No grounding model was provided. Either provide an API based model, or a self-hosted HuggingFace endpoint"
@@ -366,10 +390,10 @@ def main():
         observation_type="mixed",
         search_engine=None,
         embedding_engine_type=args.embedding_engine_type,
+        empty_knowledge_base=args.empty_knowledge_base,
     )
 
     while True:
-
         print("Enter your query (Ctrl+D on Linux/Mac or Ctrl+Z then Enter on Windows to finish):")
         query = sys.stdin.read()
         print("The query is:\n", query)
@@ -379,7 +403,14 @@ def main():
         agent.reset()
 
         # Run the agent on your own device
-        run_agent(agent, query, scaled_width, scaled_height, max_turns=args.max_turns)
+        run_agent(
+            agent, 
+            query, 
+            scaled_width, 
+            scaled_height, 
+            max_turns=args.max_turns,
+            knowledge_base_updates=not args.no_knowledge_base_updates
+        )
 
         response = input("Would you like to provide another query? (y/n): ")
         if response.lower() != "y":

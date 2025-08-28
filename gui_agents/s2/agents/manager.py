@@ -104,6 +104,7 @@ class Manager(BaseModule):
         failed_subtask: Optional[Node] = None,
         completed_subtasks_list: List[Node] = [],
         remaining_subtasks_list: List[Node] = [],
+        knowledge_base_updates: bool = True
     ) -> Tuple[Dict, str]:
         agent = self.grounding_agent
 
@@ -122,7 +123,7 @@ class Manager(BaseModule):
         if self.turn_count == 0:
 
             self.search_query = self.knowledge_base.formulate_query(
-                instruction, observation
+                instruction, observation, knowledge_base_updates
             )
 
             most_similar_task = ""
@@ -297,6 +298,7 @@ class Manager(BaseModule):
         failed_subtask: Optional[Node] = None,
         completed_subtasks_list: List[Node] = [],
         remaining_subtasks_list: List[Node] = [],
+        knowledge_base_updates: bool = True
     ):
         """Generate the action list based on the instruction
         instruction:str: Instruction for the task
@@ -308,6 +310,7 @@ class Manager(BaseModule):
             failed_subtask,
             completed_subtasks_list,
             remaining_subtasks_list,
+            knowledge_base_updates=knowledge_base_updates
         )
 
         # Generate the DAG
