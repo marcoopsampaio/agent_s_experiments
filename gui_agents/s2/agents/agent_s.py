@@ -96,7 +96,7 @@ class AgentS2(UIAgent):
         observation_type: str = "mixed",
         search_engine: Optional[str] = None,
         memory_root_path: str = os.getcwd(),
-        use_default_kb: bool = False,
+        use_default_kb: bool = True,
         memory_folder_name: str = "kb_s2",
         kb_release_tag: str = "v0.2.2",
         embedding_engine_type: str = "openai",

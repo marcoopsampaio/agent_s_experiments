@@ -1,3 +1,17 @@
+# IMPORTANT - This is a hacked version of Agent-S 
+In this section we provide some comments on how we've set up Agent-S.
+
+
+Create a .venv environment and install dependencies:
+```bash
+  python3 -m venv .venv
+  source .venv/bin/activate # to activate the virtual environment
+  pip install -r requirements.txt
+```
+
+
+# END IMPORTANT - Below is the Agent-S README
+
 <h1 align="center">
   <img src="images/agent_s.png" alt="Logo" style="vertical-align:middle" width="60"> Agent S:
   <small>Use Computer Like a Human</small>

@@ -146,12 +146,12 @@ def scale_screen_dimensions(width: int, height: int, max_dim_size: int):
     return safe_width, safe_height
 
 
-def run_agent(agent, instruction: str, scaled_width: int, scaled_height: int):
+def run_agent(agent, instruction: str, scaled_width: int, scaled_height: int, max_turns: int = 30):
     global paused
     obs = {}
     traj = "Task:\n" + instruction
     subtask_traj = ""
-    for step in range(15):
+    for step in range(max_turns):
         # Check if we're in paused state and wait
         while paused:
             time.sleep(0.1)
@@ -301,6 +301,14 @@ def main():
         help="Specify the embedding engine type (supports openai, gemini)",
     )
 
+    parser.add_argument(
+        "--max_turns",
+        type=int,
+        default=30,
+        help="Maximum number of turns to run the agent for",
+    )
+    
+
     args = parser.parse_args()
     assert (
         args.grounding_model_provider and args.grounding_model
@@ -361,12 +369,17 @@ def main():
     )
 
     while True:
-        query = input("Query: ")
+
+        print("Enter your query (Ctrl+D on Linux/Mac or Ctrl+Z then Enter on Windows to finish):")
+        query = sys.stdin.read()
+        print("The query is:\n", query)
+        
+        time.sleep(2)
 
         agent.reset()
 
         # Run the agent on your own device
-        run_agent(agent, query, scaled_width, scaled_height)
+        run_agent(agent, query, scaled_width, scaled_height, max_turns=args.max_turns)
 
         response = input("Would you like to provide another query? (y/n): ")
         if response.lower() != "y":

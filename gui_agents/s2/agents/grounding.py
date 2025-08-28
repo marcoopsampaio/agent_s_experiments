@@ -207,6 +207,8 @@ class OSWorldACI(ACI):
         print("RAW GROUNDING MODEL RESPONSE:", response)
         numericals = re.findall(r"\d+", response)
         assert len(numericals) >= 2
+        if int(numericals[0]) == 0 and int(numericals[1]) == 0:
+            return [1, 1]
         return [int(numericals[0]), int(numericals[1])]
 
     # Calls pytesseract to generate word level bounding boxes for text grounding
@@ -329,10 +331,11 @@ class OSWorldACI(ACI):
         ):
             grounding_width = self.engine_params_for_grounding["grounding_width"]
             grounding_height = self.engine_params_for_grounding["grounding_height"]
-        # Default to (1000, 1000), which is UI-TARS resizing
+        # Default to (1000, 1000), which is UI-TARS resizing @marco.titannis--> hacked/fixed below
         else:
-            grounding_width = 1000
-            grounding_height = 1000
+            grounding_width = self.width # 1000
+            grounding_height = self.height #1000
+
 
         return [
             round(coordinates[0] * self.width / grounding_width),
