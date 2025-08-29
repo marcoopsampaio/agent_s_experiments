@@ -32,6 +32,7 @@ class Manager(BaseModule):
         search_engine: Optional[str] = None,
         multi_round: bool = False,
         platform: str = platform.system().lower(),
+        combined_manager_prompt_instructions: str = None
     ):
         # TODO: move the prompt to Procedural Memory
         super().__init__(engine_params, platform)
@@ -40,7 +41,15 @@ class Manager(BaseModule):
         self.grounding_agent = grounding_agent
 
         # Initialize the planner
-        sys_prompt = PROCEDURAL_MEMORY.COMBINED_MANAGER_PROMPT
+        sys_prompt = (
+            PROCEDURAL_MEMORY.COMBINED_MANAGER_PROMPT_INPUT 
+        ) 
+        sys_prompt += (
+            combined_manager_prompt_instructions 
+            if combined_manager_prompt_instructions 
+            else PROCEDURAL_MEMORY.COMBINED_MANAGER_PROMPT_INSTRUCTIONS
+        )
+        
 
         self.generator_agent = self._create_agent(sys_prompt)
 

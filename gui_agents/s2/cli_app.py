@@ -356,6 +356,13 @@ def main():
         help="Do not replan when subtask is done",
     )
 
+    parser.add_argument(
+        "--combined_planner_prompt_instructions_file",
+        type=str,
+        default=None,
+        help="Path to file containing combined system prompt instructions",
+    )
+
     args = parser.parse_args()
 
     assert (
@@ -405,6 +412,11 @@ def main():
         width=screen_width,
         height=screen_height,
     )
+    # read combined system prompt instructions into a string
+    combined_planner_prompt_instructions = None
+    if args.combined_planner_prompt_instructions_file:
+        with open(args.combined_planner_prompt_instructions_file, "r") as f:
+            combined_planner_prompt_instructions = f.read()
 
     agent = AgentS2(
         engine_params,
@@ -418,7 +430,8 @@ def main():
         use_subtask_experience=not args.no_subtask_experience,
         enable_reflection=not args.disable_reflection,
         add_context_to_system_prompt=not args.no_context_in_system_prompt,
-        replan_when_subtask_done=not args.no_replan_when_subtask_done
+        replan_when_subtask_done=not args.no_replan_when_subtask_done,
+        combined_planner_prompt_instructions=combined_planner_prompt_instructions
     )
 
     while True:

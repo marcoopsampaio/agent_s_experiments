@@ -106,6 +106,7 @@ class AgentS2(UIAgent):
         enable_reflection: bool = True,
         add_context_to_system_prompt: bool = True,
         replan_when_subtask_done: bool = True,
+        combined_planner_prompt_instructions: str | None = None
     ):
         """Initialize AgentS2
 
@@ -140,6 +141,7 @@ class AgentS2(UIAgent):
         self.enable_reflection = enable_reflection
         self.add_context_to_system_prompt = add_context_to_system_prompt
         self.replan_when_subtask_done = replan_when_subtask_done
+        self.combined_planner_prompt_instructions = combined_planner_prompt_instructions
 
         # Initialize agent's knowledge base on user's current working directory.
         self.local_kb_path = os.path.join(
@@ -194,6 +196,7 @@ class AgentS2(UIAgent):
             embedding_engine=self.embedding_engine,
             search_engine=self.engine,
             platform=self.platform,
+            combined_manager_prompt_instructions=self.combined_planner_prompt_instructions
         )
         self.executor = Worker(
             engine_params=self.engine_params,
