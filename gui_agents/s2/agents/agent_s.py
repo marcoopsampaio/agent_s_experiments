@@ -105,6 +105,7 @@ class AgentS2(UIAgent):
         use_subtask_experience: bool = True,
         enable_reflection: bool = True,
         add_context_to_system_prompt: bool = True,
+        replan_when_subtask_done: bool = True,
     ):
         """Initialize AgentS2
 
@@ -138,6 +139,7 @@ class AgentS2(UIAgent):
         self.use_subtask_experience = use_subtask_experience
         self.enable_reflection = enable_reflection
         self.add_context_to_system_prompt = add_context_to_system_prompt
+        self.replan_when_subtask_done = replan_when_subtask_done
 
         # Initialize agent's knowledge base on user's current working directory.
         self.local_kb_path = os.path.join(
@@ -319,7 +321,7 @@ class AgentS2(UIAgent):
 
             # replan on subtask completion
             elif "DONE" in actions:
-                self.requires_replan = True
+                self.requires_replan = self.replan_when_subtask_done
                 self.needs_next_subtask = True
                 self.failure_subtask = None
                 self.completed_tasks.append(self.current_subtask)

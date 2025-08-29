@@ -350,6 +350,12 @@ def main():
         help="Do not add context in system prompt",
     )
 
+    parser.add_argument(
+        "--no_replan_when_subtask_done",
+        action="store_true",
+        help="Do not replan when subtask is done",
+    )
+
     args = parser.parse_args()
 
     assert (
@@ -411,7 +417,8 @@ def main():
         empty_knowledge_base=args.empty_knowledge_base,
         use_subtask_experience=not args.no_subtask_experience,
         enable_reflection=not args.disable_reflection,
-        add_context_to_system_prompt=not args.no_context_in_system_prompt
+        add_context_to_system_prompt=not args.no_context_in_system_prompt,
+        replan_when_subtask_done=not args.no_replan_when_subtask_done
     )
 
     while True:
