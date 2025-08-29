@@ -332,6 +332,24 @@ def main():
         help="Whether to update the knowledge base",
     )
 
+    parser.add_argument(
+        "--no_subtask_experience",
+        action="store_true",
+        help="Whether to use subtask experience",
+    )
+
+    parser.add_argument(
+        "--disable_reflection",
+        action="store_true",
+        help="Whether to use reflection",
+    )
+
+    parser.add_argument(
+        "--no_context_in_system_prompt",
+        action="store_true",
+        help="Do not add context in system prompt",
+    )
+
     args = parser.parse_args()
 
     assert (
@@ -391,6 +409,9 @@ def main():
         search_engine=None,
         embedding_engine_type=args.embedding_engine_type,
         empty_knowledge_base=args.empty_knowledge_base,
+        use_subtask_experience=not args.no_subtask_experience,
+        enable_reflection=not args.disable_reflection,
+        add_context_to_system_prompt=not args.no_context_in_system_prompt
     )
 
     while True:

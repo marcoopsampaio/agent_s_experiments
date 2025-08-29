@@ -101,7 +101,10 @@ class AgentS2(UIAgent):
         kb_release_tag: str = "v0.2.2",
         embedding_engine_type: str = "openai",
         embedding_engine_params: Dict = {},
-        empty_knowledge_base: bool = False
+        empty_knowledge_base: bool = False,
+        use_subtask_experience: bool = True,
+        enable_reflection: bool = True,
+        add_context_to_system_prompt: bool = True,
     ):
         """Initialize AgentS2
 
@@ -132,6 +135,9 @@ class AgentS2(UIAgent):
         self.memory_root_path = memory_root_path
         self.memory_folder_name = memory_folder_name
         self.kb_release_tag = kb_release_tag
+        self.use_subtask_experience = use_subtask_experience
+        self.enable_reflection = enable_reflection
+        self.add_context_to_system_prompt = add_context_to_system_prompt
 
         # Initialize agent's knowledge base on user's current working directory.
         self.local_kb_path = os.path.join(
@@ -193,6 +199,9 @@ class AgentS2(UIAgent):
             local_kb_path=self.local_kb_path,
             embedding_engine=self.embedding_engine,
             platform=self.platform,
+            use_subtask_experience=self.use_subtask_experience,
+            enable_reflection=self.enable_reflection,
+            add_context_to_system_prompt=self.add_context_to_system_prompt
         )
 
         # Reset state variables
@@ -239,7 +248,8 @@ class AgentS2(UIAgent):
                     failed_subtask=self.failure_subtask,
                     completed_subtasks_list=self.completed_tasks,
                     remaining_subtasks_list=self.subtasks,
-                    knowledge_base_updates=knowledge_base_updates
+                    knowledge_base_updates=knowledge_base_updates,
+                    use_subtask_experience=self.use_subtask_experience
                 )
 
                 self.requires_replan = False

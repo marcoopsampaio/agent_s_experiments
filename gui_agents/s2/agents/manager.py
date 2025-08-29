@@ -104,7 +104,8 @@ class Manager(BaseModule):
         failed_subtask: Optional[Node] = None,
         completed_subtasks_list: List[Node] = [],
         remaining_subtasks_list: List[Node] = [],
-        knowledge_base_updates: bool = True
+        knowledge_base_updates: bool = True,
+        use_subtask_experience: bool = True,
     ) -> Tuple[Dict, str]:
         agent = self.grounding_agent
 
@@ -122,53 +123,57 @@ class Manager(BaseModule):
         # Perform Retrieval only at the first planning step
         if self.turn_count == 0:
 
-            self.search_query = self.knowledge_base.formulate_query(
-                instruction, observation, knowledge_base_updates
-            )
-
-            most_similar_task = ""
-            retrieved_experience = ""
-            integrated_knowledge = ""
-            # Retrieve most similar narrative (task) experience
-            most_similar_task, retrieved_experience = (
-                self.knowledge_base.retrieve_narrative_experience(instruction)
-            )
-            logger.info(
-                "SIMILAR TASK EXPERIENCE: %s",
-                most_similar_task + "\n" + retrieved_experience.strip(),
-            )
-
-            # Retrieve knowledge from the web if search_engine is provided
-            if self.search_engine is not None:
-                retrieved_knowledge = self.knowledge_base.retrieve_knowledge(
-                    instruction=instruction,
-                    search_query=self.search_query,
-                    search_engine=self.search_engine,
+            if use_subtask_experience:
+                self.search_query = self.knowledge_base.formulate_query(
+                    instruction, observation, knowledge_base_updates
                 )
-                logger.info("RETRIEVED KNOWLEDGE: %s", retrieved_knowledge)
 
-                if retrieved_knowledge is not None:
-                    # Fuse the retrieved knowledge and experience
-                    integrated_knowledge = self.knowledge_base.knowledge_fusion(
-                        observation=observation,
+                most_similar_task = ""
+                retrieved_experience = ""
+                integrated_knowledge = ""
+                # Retrieve most similar narrative (task) experience
+                most_similar_task, retrieved_experience = (
+                    self.knowledge_base.retrieve_narrative_experience(instruction)
+                )
+                logger.info(
+                    "SIMILAR TASK EXPERIENCE: %s",
+                    most_similar_task + "\n" + retrieved_experience.strip(),
+                )
+
+                # Retrieve knowledge from the web if search_engine is provided
+                if self.search_engine is not None:
+                    retrieved_knowledge = self.knowledge_base.retrieve_knowledge(
                         instruction=instruction,
-                        web_knowledge=retrieved_knowledge,
-                        similar_task=most_similar_task,
-                        experience=retrieved_experience,
+                        search_query=self.search_query,
+                        search_engine=self.search_engine,
                     )
-                    logger.info("INTEGRATED KNOWLEDGE: %s", integrated_knowledge)
+                    logger.info("RETRIEVED KNOWLEDGE: %s", retrieved_knowledge)
 
-            integrated_knowledge = integrated_knowledge or retrieved_experience
+                    if retrieved_knowledge is not None:
+                        # Fuse the retrieved knowledge and experience
+                        integrated_knowledge = self.knowledge_base.knowledge_fusion(
+                            observation=observation,
+                            instruction=instruction,
+                            web_knowledge=retrieved_knowledge,
+                            similar_task=most_similar_task,
+                            experience=retrieved_experience,
+                        )
+                        logger.info("INTEGRATED KNOWLEDGE: %s", integrated_knowledge)
 
-            # Add the integrated knowledge to the task instruction in the system prompt
-            if integrated_knowledge:
-                instruction += f"\nYou may refer to some retrieved knowledge if you think they are useful.{integrated_knowledge}"
+                integrated_knowledge = integrated_knowledge or retrieved_experience
 
+                # Add the integrated knowledge to the task instruction in the system prompt
+                if integrated_knowledge:
+                    instruction += f"\nYou may refer to some retrieved knowledge if you think they are useful.{integrated_knowledge}"
+            else:
+                self.search_query = ""
+                
             self.generator_agent.add_system_prompt(
                 self.generator_agent.system_prompt.replace(
                     "TASK_DESCRIPTION", instruction
                 )
             )
+
 
         # Re-plan on failure case
         if failed_subtask:
@@ -298,7 +303,8 @@ class Manager(BaseModule):
         failed_subtask: Optional[Node] = None,
         completed_subtasks_list: List[Node] = [],
         remaining_subtasks_list: List[Node] = [],
-        knowledge_base_updates: bool = True
+        knowledge_base_updates: bool = True,
+        use_subtask_experience: bool = True,
     ):
         """Generate the action list based on the instruction
         instruction:str: Instruction for the task
@@ -310,7 +316,8 @@ class Manager(BaseModule):
             failed_subtask,
             completed_subtasks_list,
             remaining_subtasks_list,
-            knowledge_base_updates=knowledge_base_updates
+            knowledge_base_updates=knowledge_base_updates,
+            use_subtask_experience=use_subtask_experience,
         )
 
         # Generate the DAG
