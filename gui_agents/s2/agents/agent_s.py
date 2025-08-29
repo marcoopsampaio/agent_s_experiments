@@ -8,7 +8,7 @@ from gui_agents.s2.agents.grounding import ACI
 from gui_agents.s2.agents.worker import Worker
 from gui_agents.s2.agents.manager import Manager
 from gui_agents.s2.utils.common_utils import Node
-from gui_agents.utils import download_kb_data
+from gui_agents.utils import download_kb_data, set_empty_knowledge_base
 from gui_agents.s2.core.engine import (
     OpenAIEmbeddingEngine,
     GeminiEmbeddingEngine,
@@ -101,6 +101,12 @@ class AgentS2(UIAgent):
         kb_release_tag: str = "v0.2.2",
         embedding_engine_type: str = "openai",
         embedding_engine_params: Dict = {},
+        empty_knowledge_base: bool = False,
+        use_subtask_experience: bool = True,
+        enable_reflection: bool = True,
+        add_context_to_system_prompt: bool = True,
+        replan_when_subtask_done: bool = True,
+        combined_planner_prompt_instructions: str | None = None
     ):
         """Initialize AgentS2
 
@@ -117,6 +123,7 @@ class AgentS2(UIAgent):
             kb_release_tag: Release tag for knowledge base. Defaults to "v0.2.2".
             embedding_engine_type: Embedding engine to use for knowledge base. Defaults to "openai". Supports "openai" and "gemini".
             embedding_engine_params: Parameters for embedding engine. Defaults to {}.
+            empty_kb_on_download: True to empty the knowledge base.
         """
         super().__init__(
             engine_params,
@@ -130,6 +137,11 @@ class AgentS2(UIAgent):
         self.memory_root_path = memory_root_path
         self.memory_folder_name = memory_folder_name
         self.kb_release_tag = kb_release_tag
+        self.use_subtask_experience = use_subtask_experience
+        self.enable_reflection = enable_reflection
+        self.add_context_to_system_prompt = add_context_to_system_prompt
+        self.replan_when_subtask_done = replan_when_subtask_done
+        self.combined_planner_prompt_instructions = combined_planner_prompt_instructions
 
         # Initialize agent's knowledge base on user's current working directory.
         self.local_kb_path = os.path.join(
@@ -143,7 +155,7 @@ class AgentS2(UIAgent):
                     version="s2",
                     release_tag=kb_release_tag,
                     download_dir=self.local_kb_path,
-                    platform=self.platform,
+                    platform=self.platform
                 )
                 print(
                     f"Successfully completed download of knowledge base for version s2, tag {self.kb_release_tag}, platform {self.platform}."
@@ -158,6 +170,10 @@ class AgentS2(UIAgent):
                 print(
                     "Note, the knowledge is continually updated during inference. Deleting the knowledge base will wipe out all experience gained since the last knowledge base download."
                 )
+            if empty_knowledge_base:
+                print("Emptying knowledge base...")
+                set_empty_knowledge_base(self.local_kb_path + f"/{self.platform}")
+                
 
         if embedding_engine_type == "openai":
             self.embedding_engine = OpenAIEmbeddingEngine(**embedding_engine_params)
@@ -180,6 +196,7 @@ class AgentS2(UIAgent):
             embedding_engine=self.embedding_engine,
             search_engine=self.engine,
             platform=self.platform,
+            combined_manager_prompt_instructions=self.combined_planner_prompt_instructions
         )
         self.executor = Worker(
             engine_params=self.engine_params,
@@ -187,6 +204,9 @@ class AgentS2(UIAgent):
             local_kb_path=self.local_kb_path,
             embedding_engine=self.embedding_engine,
             platform=self.platform,
+            use_subtask_experience=self.use_subtask_experience,
+            enable_reflection=self.enable_reflection,
+            add_context_to_system_prompt=self.add_context_to_system_prompt
         )
 
         # Reset state variables
@@ -207,7 +227,9 @@ class AgentS2(UIAgent):
         self.executor.reset()
         self.step_count = 0
 
-    def predict(self, instruction: str, observation: Dict) -> Tuple[Dict, List[str]]:
+    def predict(
+        self, instruction: str, observation: Dict, knowledge_base_updates=True
+    ) -> Tuple[Dict, List[str]]:
         # Initialize the three info dictionaries
         planner_info = {}
         executor_info = {}
@@ -231,6 +253,8 @@ class AgentS2(UIAgent):
                     failed_subtask=self.failure_subtask,
                     completed_subtasks_list=self.completed_tasks,
                     remaining_subtasks_list=self.subtasks,
+                    knowledge_base_updates=knowledge_base_updates,
+                    use_subtask_experience=self.use_subtask_experience
                 )
 
                 self.requires_replan = False
@@ -300,7 +324,7 @@ class AgentS2(UIAgent):
 
             # replan on subtask completion
             elif "DONE" in actions:
-                self.requires_replan = True
+                self.requires_replan = self.replan_when_subtask_done
                 self.needs_next_subtask = True
                 self.failure_subtask = None
                 self.completed_tasks.append(self.current_subtask)

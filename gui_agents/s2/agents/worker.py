@@ -30,6 +30,7 @@ class Worker(BaseModule):
         platform: str = platform.system().lower(),
         enable_reflection: bool = True,
         use_subtask_experience: bool = True,
+        add_context_to_system_prompt: bool = True,
     ):
         """
         Worker receives a subtask list and active subtask and generates the next action for the to execute.
@@ -54,6 +55,7 @@ class Worker(BaseModule):
         self.embedding_engine = embedding_engine
         self.enable_reflection = enable_reflection
         self.use_subtask_experience = use_subtask_experience
+        self.add_context_to_system_prompt = add_context_to_system_prompt
         self.reset()
 
     def reset(self):
@@ -112,7 +114,7 @@ class Worker(BaseModule):
         agent = self.grounding_agent
 
         # Get RAG knowledge, only update system message at t=0
-        if self.turn_count == 0:
+        if self.turn_count == 0 and self.add_context_to_system_prompt:
             if self.use_subtask_experience:
                 subtask_query_key = (
                     "Task:\n"

@@ -432,20 +432,21 @@ class OSWorldACI(ACI):
             overwrite:bool, Assign it to True if the text should overwrite the existing text, otherwise assign it to False. Using this argument clears all text in an element.
             enter:bool, Assign it to True if the enter key should be pressed after typing the text, otherwise assign it to False.
         """
-
+        # NOTE: this was hacked below. Effectively both cases are equal but we left it with the comments
+        # for future reference.
         if self.coords1 is not None:
             # If a node is found, retrieve its coordinates and size
             # Start typing at the center of the element
 
-            x, y = self.resize_coordinates(self.coords1)
+            # x, y = self.resize_coordinates(self.coords1)
 
             command = "import pyautogui; "
-            command += f"pyautogui.click({x}, {y}); "
+            # command += f"pyautogui.click({x}, {y}); "
 
-            if overwrite:
-                command += (
-                    f"pyautogui.hotkey('ctrl', 'a'); pyautogui.press('backspace'); "
-                )
+            # if overwrite:
+            #     command += (
+            #         f"pyautogui.hotkey('ctrl', 'a'); pyautogui.press('backspace'); "
+            #     )
 
             command += f"pyautogui.write({repr(text)}); "
 
@@ -455,10 +456,10 @@ class OSWorldACI(ACI):
             # If no element is found, start typing at the current cursor location
             command = "import pyautogui; "
 
-            if overwrite:
-                command += (
-                    f"pyautogui.hotkey('ctrl', 'a'); pyautogui.press('backspace'); "
-                )
+            # if overwrite:
+            #     command += (
+            #         f"pyautogui.hotkey('ctrl', 'a'); pyautogui.press('backspace'); "
+            #     )
 
             command += f"pyautogui.write({repr(text)}); "
 

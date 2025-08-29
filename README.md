@@ -1,6 +1,6 @@
 # IMPORTANT - This is a hacked version of Agent-S 
-In this section we provide some comments on how we've set up Agent-S.
 
+In this section we provide some comments on how we've set up Agent-S. Note that we have hacked agent s2 only.
 
 Create a .venv environment and install dependencies:
 ```bash
@@ -9,6 +9,37 @@ Create a .venv environment and install dependencies:
   pip install -r requirements.txt
 ```
 
+## Main hacks
+Here we describe the main base hacks we inmplemented initially [here](https://github.com/marcoopsampaio/agent_s_experiments/commit/9673002aac525ce0d76f3481f6198569a3f51c5f) which are always active in this hacked version. They are (see also commit message):
+- Prevent mouse from ever moving to (0,0) coordinates to avoid the agent crashing while executing due to pyautogui failsafe that stops execution when that happens.
+- Sets grouding width and height to the screen width and height instead of the previous hard coded values. 
+- Changes input method for the cli app to better deal with new lines and increases the max number of tries for each task.
+
+Another hack was also add in [this](https://github.com/marcoopsampaio/agent_s_experiments/pull/1/commits/f5e28cec3c5baa220fbc3b47c418ff78db9194e0#diff-80544704b5ed58fef77c79b3c1f6600c61e644a009db08a6feaa524724646dc8) commit:
+- We changed the `type` action to never try to click plus Ctrl+A the field where it is trying to type since, e.g. in spreadsheets, there is the danger that it starts selecting too many elements and mess up the execution a lot (it is safer to let it try some other way if it fails to type directly).
+
+## Added options
+In addition, support was added to control better what is used or not used when running agent s2 through the cli app. In particular:
+- `--empty_knowledge_base`: this flag allows to empty the contents of the knowledge base. This can be used to avoid the agent getting confused from tasks that are somewhat semantically related but not exactly within the target domain. This still supports adding new entries to the knowledge base during execution.
+- `--no_knowledge_base_updates`: this flag prevents new entries to be added to the knowledge base.
+- `--no_subtask_experience`: this completely turns off searching the knowledge base for related subtasks previous experience.
+- `--disable_reflection`: this completely turns off the reflection agent which looks at what has happened to decide whether we are on track or not.
+- `--no_context_in_system_prompt`: this completely turns off all additional context added in the system prompt at the start of each subtask execution (which may include the full plan and related retrieved subtasks). The idea behind this is to try to speed up the planning of each subtask execution assuming the initial high level plan is solid (to try to speed up execution). 
+- `--no_replan_when_subtask_done`: this flag allows to avoid the agent to replan at each subtask completion. This can be used to try to speed up the execution of each subtask assuming the initial high level plan is solid (to try to speed up execution).
+- `--combined_planner_prompt_instructions_file`: this flag allows to use a custom file to replace the instructions part of the planner prompt that is used to generate the high level plan. An example file is provided with a slightly changed prompt `alternative_planner_prompt_instructions.txt`.
+
+## Running Agent-S2
+
+For our current prototype attempts (29 Aug 2025) the options that yielded the best results in ubuntu were (though the execution is slow):
+
+```bash
+python -m gui_agents.s2.cli_app   --provider "openai"   --model "gpt-4.1"  --endpoint_provider "huggingface" --endpoint_url "https://XXXXXXXXXXXXX.us-east-1.aws.endpoints.huggingface.cloud/v1/" --endpoint_api_key "XXXXXXXXXXXXXXXXXXX" --empty_knowledge_base --no_knowledge_base_updates --combined_planner_prompt_instructions_file alternative_planner_prompt_instructions.txt 
+```
+
+Some attemtps to speed up execution can be done by turning on all options at once (under development):
+```bash
+python -m gui_agents.s2.cli_app   --provider "openai"   --model "gpt-4.1"  --endpoint_provider "huggingface" --endpoint_url "https://XXXXXXXXXXXXX.us-east-1.aws.endpoints.huggingface.cloud/v1/" --endpoint_api_key "XXXXXXXXXXXXXXXXXXX" --empty_knowledge_base --no_knowledge_base_updates --combined_planner_prompt_instructions_file alternative_planner_prompt_instructions.txt --no_subtask_experience --disable_reflection --no_context_in_system_prompt --no_replan_when_subtask_done 
+```
 
 # END IMPORTANT - Below is the Agent-S README
 

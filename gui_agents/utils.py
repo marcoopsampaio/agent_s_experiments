@@ -5,6 +5,7 @@ import requests
 import zipfile
 import io
 import os
+import pickle
 
 
 def download_kb_data(
@@ -46,4 +47,16 @@ def download_kb_data(
     with zipfile.ZipFile(zip_data, "r") as zip_ref:
         zip_ref.extractall(download_dir)
 
-    print(f"Extracted {asset_name} to ./{download_dir}")
+def set_empty_knowledge_base(kb_data_dir):
+    embeddings_path = os.path.join(kb_data_dir, "embeddings.pkl")
+    pickle.dump({}, open(embeddings_path, "wb"))
+
+    for filename in [
+        "episodic_memory.json", 
+        "narrative_memory.json", 
+        "formulate_query.json", 
+        "perplexica_rag_knowledge.json"
+    ]:
+        filepath = os.path.join(kb_data_dir, filename)
+        with open(filepath, "w") as f:
+            f.write("{}")

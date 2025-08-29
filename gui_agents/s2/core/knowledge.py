@@ -80,7 +80,9 @@ class KnowledgeBase(BaseModule):
 
         return search_query, search_results
 
-    def formulate_query(self, instruction: str, observation: Dict) -> str:
+    def formulate_query(
+        self, instruction: str, observation: Dict, knowledge_base_updates=True
+    ) -> str:
         """Formulate search query based on instruction and current state"""
         query_path = os.path.join(
             self.local_kb_path, self.platform, "formulate_query.json"
@@ -113,8 +115,9 @@ class KnowledgeBase(BaseModule):
         search_query = self.query_formulator.get_response().strip().replace('"', "")
         print("search query: ", search_query)
         formulate_query[instruction] = search_query
-        with open(query_path, "w") as f:
-            json.dump(formulate_query, f, indent=2)
+        if knowledge_base_updates:
+            with open(query_path, "w") as f:
+                json.dump(formulate_query, f, indent=2)
 
         return search_query
 
